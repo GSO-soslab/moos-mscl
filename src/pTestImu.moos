@@ -1,0 +1,19 @@
+// MOOS file
+
+ServerHost = localhost
+ServerPort = 9000
+
+ProcessConfig = ANTLER
+{
+    MSBetweenLaunches = 200
+    Run = pMicrostrainIMU @ NewConsole = false
+}
+
+ProcessConfig = pMicrostrainIMU
+{
+    AppTick   = 4
+    CommsTick = 4
+
+    param = "My param"
+
+}
