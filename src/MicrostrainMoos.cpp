@@ -79,22 +79,22 @@ void MicrostrainMoos::publish_filtered(filter_data_t d) {
 
 void MicrostrainMoos::publish_imu(imu_data_t d) {
     if(m_publish_raw) {
-        Notify(m_prefix + "_LINEAR_ACCEL_X", d.linear_accel_x);
-        Notify(m_prefix + "_LINEAR_ACCEL_Y", d.linear_accel_y);
-        Notify(m_prefix + "_LINEAR_ACCEL_Z", d.linear_accel_z);
+        Notify(m_prefix + "_X_ACCEL", d.linear_accel_x);
+        Notify(m_prefix + "_Y_ACCEL", d.linear_accel_y);
+        Notify(m_prefix + "_Z_ACCEL", d.linear_accel_z);
     
     
-        Notify(m_prefix + "_ANGULAR_X", d.angular_vel_x);
-        Notify(m_prefix + "_ANGULAR_Y", d.angular_vel_y);
-        Notify(m_prefix + "_ANGULAR_Z", d.angular_vel_z);
+        Notify(m_prefix + "_X_GYRO", d.angular_vel_x);
+        Notify(m_prefix + "_Y_GYRO", d.angular_vel_y);
+        Notify(m_prefix + "_Z_GYRO", d.angular_vel_z);
     
-        Notify(m_prefix + "_MAG_X", d.mag_x);
-        Notify(m_prefix + "_MAG_Y", d.mag_y);
-        Notify(m_prefix + "_MAG_Z", d.mag_z);
+        Notify(m_prefix + "_X_MAG", d.mag_x);
+        Notify(m_prefix + "_Y_MAG", d.mag_y);
+        Notify(m_prefix + "_Z_MAG", d.mag_z);
     
-        Notify(m_prefix + "_QUAT_W", d.quat_w);
-        Notify(m_prefix + "_QUAT_X", d.quat_x);
-        Notify(m_prefix + "_QUAT_Y", d.quat_y);
-        Notify(m_prefix + "_QUAT_Z", d.quat_z);
+        Notify(m_prefix + "_W_QUAT", d.quat_w);
+        Notify(m_prefix + "_X_QUAT", d.quat_x);
+        Notify(m_prefix + "_Y_QUAT", d.quat_y);
+        Notify(m_prefix + "_Z_QUAT", d.quat_z);
     }
 }
