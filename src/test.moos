@@ -14,6 +14,16 @@ ProcessConfig = pMicrostrainIMU
     AppTick   = 4
     CommsTick = 4
 
-    param = "My param"
+    port = "/dev/ttyACM0"
+    baudrate = 115200
+
+    prefix = "MS"
+
+    publish_raw = TRUE
+    publish_filter = TRUE
+
+    publish_frequency = 40
+    imu_frequency = 40
+    filter_frequency = 40
 
 }
