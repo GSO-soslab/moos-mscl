@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(pMicrostrainIMU VERSION 0.0.1 LANGUAGES CXX)
+project(iMicrostrainIMU VERSION 0.0.1 LANGUAGES CXX)
 
 add_compile_options(-std=c++11)
 
 ## MOOS
-set(MOOS_DIR "/opt/moos-ivp/build/MOOS/MOOSCore")
+# FIXME: make it optional
+set(MOOS_DIR "/Temp/uUUV-master/src/Linux/pub/MOOS/moos-ivp/build/MOOS/MOOSCore")
+# set(MOOS_DIR "/opt/moos-ivp/build/MOOS/MOOSCore")
 find_package(MOOS REQUIRED)
 include_directories(${MOOS_INCLUDE_DIRS})
 link_directories(${MOOS_LIBRARY_DIRS})
@@ -35,6 +37,6 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 file(
-  COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/pTestImu.moos
+  COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/test.moos
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
 )

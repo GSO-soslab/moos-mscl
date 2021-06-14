@@ -93,8 +93,22 @@ class Microstrain {
 
         Microstrain(std::string port, int baud, std::shared_ptr<MicrostrainMoos> moos_node);
 
+        void set_baudrate(int b) { m_baudrate = b;}
+        int get_baudrate() { return m_baudrate; }
+        
+        void set_port(std::string p) { m_port = p; }
+        std::string get_port() { return m_port; }
+        
+        void set_rate(float r) { m_rate = r; }
+        float get_rate() { return m_rate; }
+    
+        void set_imu_rate(float r) { m_imu_data_rate = r; }
+        float get_imu_rate() { return m_imu_data_rate; }
+    
+        void set_filter_rate(float r) { m_filter_data_rate = r; }
+        float get_filter_rate() { return m_filter_data_rate; }
 
-    void initialize();
+        void initialize();
         
         void configure();
         

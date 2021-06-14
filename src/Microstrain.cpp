@@ -138,13 +138,13 @@ void Microstrain::configure() {
             mscl::VehicleModeTypes modes = m_dev->features().supportedVehicleModeTypes();
             if (std::find(modes.begin(), modes.end(), static_cast<mscl::InertialTypes::VehicleModeType>(DYNAMICS_MODE_PORTABLE)) != modes.end())
             {
-                fprintf(stdout,"Setting dynamics mode to %#04X", static_cast<mscl::InertialTypes::VehicleModeType>(DYNAMICS_MODE_PORTABLE));
+                fprintf(stdout,"Setting dynamics mode to %#04X\n", static_cast<mscl::InertialTypes::VehicleModeType>(DYNAMICS_MODE_PORTABLE));
                 m_dev->setVehicleDynamicsMode(static_cast<mscl::InertialTypes::VehicleModeType>(DYNAMICS_MODE_PORTABLE));
             }
         }
         else
         {
-            fprintf(stdout,"Note: The device does not support the vehicle dynamics mode command.");
+            fprintf(stdout,"Note: The device does not support the vehicle dynamics mode command.\n");
         }
         
         //Set heading Source
@@ -154,7 +154,7 @@ void Microstrain::configure() {
             {
                 if(headingSources.AsOptionId() == static_cast<mscl::InertialTypes::HeadingUpdateEnableOption>(HEADING_SOURCE_MAGNETIC))
                 {
-                    fprintf(stdout,"Setting heading source to %#04X", HEADING_SOURCE_MAGNETIC);
+                    fprintf(stdout,"Setting heading source to %#04X\n", HEADING_SOURCE_MAGNETIC);
                     m_dev->setHeadingUpdateControl(mscl::HeadingUpdateOptions(static_cast<mscl::InertialTypes::HeadingUpdateEnableOption>(HEADING_SOURCE_MAGNETIC)));
                     break;
                 }
@@ -163,13 +163,13 @@ void Microstrain::configure() {
             //Set the initial heading
             if((m_heading_source == 0) && (m_dev->features().supportsCommand(mscl::MipTypes::Command::CMD_EF_INIT_HEADING)))
             {
-                fprintf(stdout,"Setting initial heading to %f", m_initial_heading);
+                fprintf(stdout,"Setting initial heading to %f\n", m_initial_heading);
                 m_dev->setInitialHeading(m_initial_heading);
             }
         }
         else
         {
-            fprintf(stdout, "Note: The device does not support the heading source command.");
+            fprintf(stdout, "Note: The device does not support the heading source command.\n");
         }
         
         
@@ -219,8 +219,6 @@ void Microstrain::parse_mip_packet(const mscl::MipDataPacket &packet) {
 void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
     int  i;
 
-    filter_data_t d;
-
     //Handle time
     uint64_t time = packet.collectedTimestamp().nanoseconds();
     
@@ -253,15 +251,15 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
             {
                 if(point.qualifier() == mscl::MipTypes::CH_ROLL)
                 {
-                    d.roll = point.as_float();
+                    m_filter_data.roll = point.as_float();
                 }
                 else if(point.qualifier() == mscl::MipTypes::CH_PITCH)
                 {
-                    d.pitch = point.as_float();
+                    m_filter_data.pitch = point.as_float();
                 }
                 else if(point.qualifier() == mscl::MipTypes::CH_YAW)
                 {
-                    d.yaw = point.as_float();
+                    m_filter_data.yaw = point.as_float();
                     
                     // m_filter_heading_msg.heading_deg = m_curr_filter_yaw*180.0/3.14;
                     // m_filter_heading_msg.heading_rad = m_curr_filter_yaw;
@@ -498,7 +496,7 @@ void Microstrain::parse_imu_packet(const mscl::MipDataPacket &packet) {
 void Microstrain::run() {
     while(!m_stop) {
         auto now = std::chrono::steady_clock::now();
-        auto next = now + std::chrono::milliseconds(long(100));
+        auto next = now + std::chrono::milliseconds(long(1000 / m_rate));
         run_once();
         std::this_thread::sleep_until(next);
     }

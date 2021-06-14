@@ -24,7 +24,7 @@ public:
 
     void publish_filtered(filter_data_t d);
 
-    bool publish_imu(imu_data_t d);
+    void publish_imu(imu_data_t d);
 
 protected:
     
@@ -44,8 +44,20 @@ private:
 
     std::string m_imu_port;
 
+    std::string m_prefix;
+   
+    bool m_publish_raw;
+    
+    bool m_publish_filter;
+    
     int m_imu_baudrate;
-
+    
+    float m_publish_frequency;
+    
+    float m_imu_frequency;
+    
+    float m_filter_frequency;
+    
     std::string m_param;
 
     MOOS::MOOSAsyncCommClient m_comms;

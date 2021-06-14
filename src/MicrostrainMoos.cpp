@@ -14,8 +14,29 @@ bool MicrostrainMoos::OnStartUp() {
     if(!m_MissionReader.GetConfigurationParam("port", m_imu_port)){
         m_imu_port = "/dev/ttyACM0";
     }
+    if(!m_MissionReader.GetConfigurationParam("prefix", m_prefix)) {
+        m_prefix = "MS";
+    }
+    if(! m_MissionReader.GetConfigurationParam("publish_raw", m_publish_raw)) {
+        m_publish_raw = true;
+    }
+    if(! m_MissionReader.GetConfigurationParam("publish_filter", m_publish_filter)) {
+        m_publish_filter = true;
+    }
+    if(! m_MissionReader.GetConfigurationParam("publish_frequency", m_publish_frequency)) {
+        m_publish_frequency = 50;
+    }
+    if(! m_MissionReader.GetConfigurationParam("imu_frequency", m_imu_frequency)) {
+        m_imu_frequency = 50;
+    }
+    if(! m_MissionReader.GetConfigurationParam("filter_frequency", m_filter_frequency)) {
+        m_filter_frequency = 50;
+    }
     m_imu = Microstrain(m_imu_port, m_imu_baudrate, shared_from_this());
-
+    m_imu.set_rate(m_publish_frequency);
+    m_imu.set_imu_rate(m_imu_frequency);
+    m_imu.set_filter_rate(m_filter_frequency);
+    
     m_imu.initialize();
 
     m_imu.configure();
@@ -39,7 +60,7 @@ bool MicrostrainMoos::OnNewMail(MOOSMSG_LIST &Mail) {
 
 bool MicrostrainMoos::OnConnectToServer() {
     bool r = true;
-    // r &= Register("*","*", 0);
+    r &= Register(MOOS_KEY_START_CALIBRATION, 0);
     return r;
 }
 
@@ -49,27 +70,31 @@ bool MicrostrainMoos::Iterate() {
 }
 
 void MicrostrainMoos::publish_filtered(filter_data_t d) {
-    Notify("MICROSTRAIN_ROLL", d.roll);
-    Notify("MICROSTRAIN_PITCH", d.pitch);
-    Notify("MICROSTRAIN_YAW", d.yaw);
+    if(m_publish_filter) {
+        Notify(m_prefix + "_ROLL", d.roll);
+        Notify(m_prefix + "_PITCH", d.pitch);
+        Notify(m_prefix + "_YAW", d.yaw);
+    }
 }
 
-bool MicrostrainMoos::publish_imu(imu_data_t d) {
-    Notify("MICROSTRAIN_LINEAR_ACCEL_X", d.linear_accel_x);
-    Notify("MICROSTRAIN_LINEAR_ACCEL_Y", d.linear_accel_y);
-    Notify("MICROSTRAIN_LINEAR_ACCEL_Z", d.linear_accel_z);
-
-
-    Notify("MICROSTRAIN_ANGULAR_X", d.angular_vel_x);
-    Notify("MICROSTRAIN_ANGULAR_Y", d.angular_vel_y);
-    Notify("MICROSTRAIN_ANGULAR_Z", d.angular_vel_z);
-
-    Notify("MICROSTRAIN_MAG_X", d.mag_x);
-    Notify("MICROSTRAIN_MAG_Y", d.mag_y);
-    Notify("MICROSTRAIN_MAG_Z", d.mag_z);
-
-    Notify("MICROSTRAIN_QUAT_W", d.quat_w);
-    Notify("MICROSTRAIN_QUAT_X", d.quat_x);
-    Notify("MICROSTRAIN_QUAT_Y", d.quat_y);
-    Notify("MICROSTRAIN_QUAT_Z", d.quat_z);
+void MicrostrainMoos::publish_imu(imu_data_t d) {
+    if(m_publish_raw) {
+        Notify(m_prefix + "_LINEAR_ACCEL_X", d.linear_accel_x);
+        Notify(m_prefix + "_LINEAR_ACCEL_Y", d.linear_accel_y);
+        Notify(m_prefix + "_LINEAR_ACCEL_Z", d.linear_accel_z);
+    
+    
+        Notify(m_prefix + "_ANGULAR_X", d.angular_vel_x);
+        Notify(m_prefix + "_ANGULAR_Y", d.angular_vel_y);
+        Notify(m_prefix + "_ANGULAR_Z", d.angular_vel_z);
+    
+        Notify(m_prefix + "_MAG_X", d.mag_x);
+        Notify(m_prefix + "_MAG_Y", d.mag_y);
+        Notify(m_prefix + "_MAG_Z", d.mag_z);
+    
+        Notify(m_prefix + "_QUAT_W", d.quat_w);
+        Notify(m_prefix + "_QUAT_X", d.quat_x);
+        Notify(m_prefix + "_QUAT_Y", d.quat_y);
+        Notify(m_prefix + "_QUAT_Z", d.quat_z);
+    }
 }

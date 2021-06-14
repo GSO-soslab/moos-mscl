@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
     
     std::string mission_file = P.GetFreeParameter(0, "Mission.moos");
     
-    std::string app_name = P.GetFreeParameter(1, "pMicrostrainIMU");
+    std::string app_name = P.GetFreeParameter(1, "iMicrostrainIMU");
     
     auto imu_node = std::make_shared<MicrostrainMoos>();
 
