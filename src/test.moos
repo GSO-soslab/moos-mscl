@@ -6,10 +6,10 @@ ServerPort = 9000
 ProcessConfig = ANTLER
 {
     MSBetweenLaunches = 200
-    Run = pMicrostrainIMU @ NewConsole = false
+    Run = ./iMicrostrainIMU @ NewConsole = false
 }
 
-ProcessConfig = pMicrostrainIMU
+ProcessConfig = iMicrostrainIMU
 {
     AppTick   = 4
     CommsTick = 4
