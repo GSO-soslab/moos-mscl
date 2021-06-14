@@ -63,6 +63,31 @@ private:
     MOOS::MOOSAsyncCommClient m_comms;
 
     std::thread m_imu_thread;
+
+    std::string m_name_x_accel;
+    std::string m_name_y_accel;
+    std::string m_name_z_accel;
+
+
+    std::string m_name_x_gyro;
+    std::string m_name_y_gyro;
+    std::string m_name_z_gyro;
+
+    std::string m_name_x_mag;
+    std::string m_name_y_mag;
+    std::string m_name_z_mag;
+
+    std::string m_name_w_quat;
+    std::string m_name_x_quat;
+    std::string m_name_y_quat;
+    std::string m_name_z_quat;
+
+    std::string m_name_roll;
+    std::string m_name_pitch;
+    std::string m_name_yaw;
+
+
+
 };
 
 #endif //MICROSTRAIN_MOOS_H

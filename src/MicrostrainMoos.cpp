@@ -7,7 +7,6 @@ MicrostrainMoos::MicrostrainMoos() = default;
 bool MicrostrainMoos::OnStartUp() {
 
 
-
     if(!m_MissionReader.GetConfigurationParam("baudrate", m_imu_baudrate)){
         m_imu_baudrate = 115200;
     }
@@ -43,6 +42,27 @@ bool MicrostrainMoos::OnStartUp() {
 
     m_imu_thread = std::thread(&Microstrain::run, m_imu);
 
+    m_name_roll = m_prefix + "_ROLL";
+    m_name_pitch = m_prefix + "_PITCH";
+    m_name_yaw = m_prefix + "_YAW";
+
+    m_name_x_accel = m_prefix + "_X_ACCEL";
+    m_name_y_accel = m_prefix + "_Y_ACCEL";
+    m_name_z_accel = m_prefix + "_Z_ACCEL";
+
+    m_name_x_gyro = m_prefix + "_X_GYRO";
+    m_name_y_gyro = m_prefix + "_Y_GYRO";
+    m_name_z_gyro = m_prefix + "_Z_GYRO";
+
+    m_name_z_quat = m_prefix + "_W_QUAT";
+    m_name_x_quat = m_prefix + "_X_QUAT";
+    m_name_y_quat = m_prefix + "_Y_QUAT";
+    m_name_z_quat = m_prefix + "_Z_QUAT";
+
+    m_name_x_quat = m_prefix + "_X_MAG";
+    m_name_y_quat = m_prefix + "_Y_MAG";
+    m_name_z_quat = m_prefix + "_Z_MAG";
+
     return true;
 }
 
@@ -54,7 +74,6 @@ bool MicrostrainMoos::OnNewMail(MOOSMSG_LIST &Mail) {
         }
     }
 
-
     return true;
 }
 
@@ -65,36 +84,34 @@ bool MicrostrainMoos::OnConnectToServer() {
 }
 
 bool MicrostrainMoos::Iterate() {
-    Notify("X", std::chrono::system_clock::now().time_since_epoch().count());
     return true;
 }
 
 void MicrostrainMoos::publish_filtered(filter_data_t d) {
     if(m_publish_filter) {
-        Notify(m_prefix + "_ROLL", d.roll);
-        Notify(m_prefix + "_PITCH", d.pitch);
-        Notify(m_prefix + "_YAW", d.yaw);
+        Notify(m_name_roll, d.roll);
+        Notify(m_name_pitch, d.pitch);
+        Notify(m_name_yaw, d.yaw);
     }
 }
 
 void MicrostrainMoos::publish_imu(imu_data_t d) {
     if(m_publish_raw) {
-        Notify(m_prefix + "_X_ACCEL", d.linear_accel_x);
-        Notify(m_prefix + "_Y_ACCEL", d.linear_accel_y);
-        Notify(m_prefix + "_Z_ACCEL", d.linear_accel_z);
+        Notify(m_name_x_accel, d.linear_accel_x);
+        Notify(m_name_y_accel, d.linear_accel_y);
+        Notify(m_name_z_accel, d.linear_accel_z);
+
+        Notify(m_name_x_gyro, d.angular_vel_x);
+        Notify(m_name_y_gyro, d.angular_vel_y);
+        Notify(m_name_z_gyro, d.angular_vel_z);
     
+        Notify(m_name_x_mag, d.mag_x);
+        Notify(m_name_y_mag, d.mag_y);
+        Notify(m_name_z_mag, d.mag_z);
     
-        Notify(m_prefix + "_X_GYRO", d.angular_vel_x);
-        Notify(m_prefix + "_Y_GYRO", d.angular_vel_y);
-        Notify(m_prefix + "_Z_GYRO", d.angular_vel_z);
-    
-        Notify(m_prefix + "_X_MAG", d.mag_x);
-        Notify(m_prefix + "_Y_MAG", d.mag_y);
-        Notify(m_prefix + "_Z_MAG", d.mag_z);
-    
-        Notify(m_prefix + "_W_QUAT", d.quat_w);
-        Notify(m_prefix + "_X_QUAT", d.quat_x);
-        Notify(m_prefix + "_Y_QUAT", d.quat_y);
-        Notify(m_prefix + "_Z_QUAT", d.quat_z);
+        Notify(m_name_w_quat, d.quat_w);
+        Notify(m_name_x_quat, d.quat_x);
+        Notify(m_name_y_quat, d.quat_y);
+        Notify(m_name_z_quat, d.quat_z);
     }
 }
