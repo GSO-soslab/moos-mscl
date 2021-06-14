@@ -22,9 +22,13 @@ public:
     MicrostrainMoos();
     ~MicrostrainMoos() override = default;
 
-    void publish_filtered(filter_data_t d);
+    void publish_filtered(imu_data_t d);
 
     void publish_imu(imu_data_t d);
+
+    bool publish_fileterd() { return  m_publish_filter; };
+
+    bool publish_imu() { return m_publish_raw; }
 
 protected:
     
@@ -44,8 +48,10 @@ private:
 
     std::string m_imu_port;
 
-    std::string m_prefix;
-   
+    std::string m_raw_prefix;
+
+    std::string m_filter_prefix;
+
     bool m_publish_raw;
     
     bool m_publish_filter;
@@ -58,7 +64,6 @@ private:
     
     float m_filter_frequency;
     
-    std::string m_param;
 
     MOOS::MOOSAsyncCommClient m_comms;
 
@@ -67,7 +72,6 @@ private:
     std::string m_name_x_accel;
     std::string m_name_y_accel;
     std::string m_name_z_accel;
-
 
     std::string m_name_x_gyro;
     std::string m_name_y_gyro;
@@ -81,6 +85,24 @@ private:
     std::string m_name_x_quat;
     std::string m_name_y_quat;
     std::string m_name_z_quat;
+
+    std::string m_name_f_x_accel;
+    std::string m_name_f_y_accel;
+    std::string m_name_f_z_accel;
+
+    std::string m_name_f_x_gyro;
+    std::string m_name_f_y_gyro;
+    std::string m_name_f_z_gyro;
+
+    std::string m_name_f_x_mag;
+    std::string m_name_f_y_mag;
+    std::string m_name_f_z_mag;
+
+    std::string m_name_f_w_quat;
+    std::string m_name_f_x_quat;
+    std::string m_name_f_y_quat;
+    std::string m_name_f_z_quat;
+
 
     std::string m_name_roll;
     std::string m_name_pitch;

@@ -57,8 +57,8 @@ void Microstrain::configure() {
     estFilterChs.push_back(mscl::MipChannel(mscl::MipTypes::CH_FIELD_ESTFILTER_ESTIMATED_GYRO_BIAS, mscl::SampleRate::Hertz(100)));
     estFilterChs.push_back(mscl::MipChannel(mscl::MipTypes::CH_FIELD_ESTFILTER_ESTIMATED_ANGULAR_RATE, mscl::SampleRate::Hertz(100)));
     estFilterChs.push_back(mscl::MipChannel(mscl::MipTypes::CH_FIELD_ESTFILTER_ESTIMATED_LINEAR_ACCEL, mscl::SampleRate::Hertz(100)));
-    
-    
+
+
     if(supports_imu) {
         mscl::SampleRate imu_rate = mscl::SampleRate::Hertz(m_imu_data_rate);
     
@@ -202,13 +202,15 @@ void Microstrain::parse_mip_packet(const mscl::MipDataPacket &packet) {
     switch (packet.descriptorSet())
     {
         case mscl::MipTypes::DataClass::CLASS_AHRS_IMU:
-            parse_imu_packet(packet);
-            // print_packet_stats();
+            if(m_moos_node->publish_imu()) {
+                parse_imu_packet(packet);
+            }
             break;
         
         case mscl::MipTypes::DataClass::CLASS_ESTFILTER:
-            parse_filter_packet(packet);
-            // print_packet_stats();
+            if(m_moos_node->publish_fileterd()) {
+                parse_filter_packet(packet);
+            }
             break;
         default:
             break;
@@ -220,7 +222,7 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
     int  i;
 
     //Handle time
-    uint64_t time = packet.collectedTimestamp().nanoseconds();
+    m_filter_data.time = packet.collectedTimestamp().nanoseconds();
     
     //Get the list of data elements
     const mscl::MipDataPoints &points = packet.data();
@@ -230,6 +232,7 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
     {
         switch(point.field())
         {
+            /*
             case mscl::MipTypes::CH_FIELD_ESTFILTER_FILTER_STATUS:
             {
                 if(point.qualifier() == mscl::MipTypes::CH_FILTER_STATE)
@@ -245,8 +248,8 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
                     // m_filter_status_msg.status_flags = point.as_uint16();
                 }
             }break;
-            
-            
+            */
+
             case mscl::MipTypes::CH_FIELD_ESTFILTER_ESTIMATED_ORIENT_EULER:
             {
                 if(point.qualifier() == mscl::MipTypes::CH_ROLL)
@@ -260,7 +263,7 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
                 else if(point.qualifier() == mscl::MipTypes::CH_YAW)
                 {
                     m_filter_data.yaw = point.as_float();
-                    
+
                     // m_filter_heading_msg.heading_deg = m_curr_filter_yaw*180.0/3.14;
                     // m_filter_heading_msg.heading_rad = m_curr_filter_yaw;
                 }
@@ -269,50 +272,51 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
                     // m_filter_heading_msg.status_flags = point.as_uint16();
                 }
             }break;
-            
+
             case mscl::MipTypes::CH_FIELD_ESTFILTER_ESTIMATED_ORIENT_QUATERNION:
             {
                 mscl::Vector quaternion  = point.as_Vector();
-                // m_curr_filter_quaternion = quaternion;
-                // m_filter_msg.pose.pose.orientation.w  = quaternion.as_floatAt(0);
-                // m_filter_msg.pose.pose.orientation.x  = quaternion.as_floatAt(1);
-                // m_filter_msg.pose.pose.orientation.y  = quaternion.as_floatAt(2);
-                // m_filter_msg.pose.pose.orientation.z  = quaternion.as_floatAt(3);
-                
+                m_filter_data.quat_w = quaternion.as_floatAt(0);
+                m_filter_data.quat_x = quaternion.as_floatAt(1);
+                m_filter_data.quat_y = quaternion.as_floatAt(2);
+                m_filter_data.quat_z = quaternion.as_floatAt(3);
+
+
             }break;
-            
+
             case mscl::MipTypes::CH_FIELD_ESTFILTER_ESTIMATED_ANGULAR_RATE:
             {
                 if(point.qualifier() == mscl::MipTypes::CH_X)
                 {
-                    // m_curr_filter_angular_rate_x              = point.as_float();
+                    m_filter_data.angular_vel_x = point.as_float();
                 }
                 else if(point.qualifier() == mscl::MipTypes::CH_Y)
                 {
-                    // m_curr_filter_angular_rate_y              = point.as_float();
+                    m_filter_data.angular_vel_y = point.as_float();
                 }
                 else if(point.qualifier() == mscl::MipTypes::CH_Z)
                 {
-                    // m_curr_filter_angular_rate_z              = point.as_float();
+                    m_filter_data.angular_vel_z = point.as_float();
                 }
             }break;
-            
+
             case mscl::MipTypes::CH_FIELD_ESTFILTER_COMPENSATED_ACCEL:
             {
                 if (point.qualifier() == mscl::MipTypes::CH_X)
                 {
-                    // m_filtered_imu_msg.linear_acceleration.x = point.as_float();
+                    m_filter_data.linear_accel_x = point.as_float();
                 }
                 else if (point.qualifier() == mscl::MipTypes::CH_Y)
                 {
-                    // m_filtered_imu_msg.linear_acceleration.y = point.as_float();
+                    m_filter_data.linear_accel_y = point.as_float();
                 }
                 else if (point.qualifier() == mscl::MipTypes::CH_Z)
                 {
-                    // m_filtered_imu_msg.linear_acceleration.z = point.as_float();
+                    m_filter_data.linear_accel_z = point.as_float();
                 }
             } break;
-           
+
+            /*
             case mscl::MipTypes::CH_FIELD_ESTFILTER_ESTIMATED_ATT_UNCERT_EULER:
             {
                 if(point.qualifier() == mscl::MipTypes::CH_ROLL)
@@ -337,8 +341,9 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
                     // m_filter_relative_pos_msg.pose.covariance[35] = m_filter_msg.pose.covariance[35];
                 }
             } break;
+             */
             
-            
+            /*
             case mscl::MipTypes::CH_FIELD_ESTFILTER_HEADING_UPDATE_SOURCE:
             {
                 if(point.qualifier() == mscl::MipTypes::CH_HEADING)
@@ -358,7 +363,7 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
                     // m_filter_heading_state_msg.status_flags = point.as_uint16();
                 }
             } break;
-            
+            */
            
             default:
                 break;
@@ -372,7 +377,7 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
 
 void Microstrain::parse_imu_packet(const mscl::MipDataPacket &packet) {
     //Handle time
-    uint64_t time = packet.collectedTimestamp().nanoseconds();
+    m_imu_data.time = packet.collectedTimestamp().nanoseconds();
 
     //Data present flags
     bool has_accel = false;
@@ -525,6 +530,6 @@ imu_data_t Microstrain::get_imu_data() {
     return m_imu_data;
 }
 
-filter_data_t & Microstrain::get_filter_data() {
+imu_data_t & Microstrain::get_filter_data() {
     return m_filter_data;
 }

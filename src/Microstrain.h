@@ -30,6 +30,10 @@
 #define USTRAIN_G 9.80665
 
 typedef struct imu_data_t {
+    uint64_t time;
+    float roll;
+    float pitch;
+    float yaw;
     float linear_accel_x;
     float linear_accel_y;
     float linear_accel_z;
@@ -66,20 +70,6 @@ typedef struct imu_data_t {
 } imu_data_t;
 
 
-typedef struct filter_data_t {
-    float roll;
-    float pitch;
-    float yaw;
-
-    friend std::ostream& operator<<(std::ostream& os, const filter_data_t& obj)
-    {
-        // write obj to stream
-        os << "roll: " << obj.roll
-           << " pitch: " << obj.pitch
-           << " yaw: " << obj.yaw;
-        return os;
-    }
-} filter_data_t;
 
 class MicrostrainMoos;
 
@@ -124,7 +114,7 @@ class Microstrain {
 
         imu_data_t get_imu_data();
 
-        filter_data_t & get_filter_data();
+        imu_data_t & get_filter_data();
 
     private:
     
@@ -135,7 +125,7 @@ class Microstrain {
 
         imu_data_t m_imu_data;
 
-        filter_data_t m_filter_data;
+        imu_data_t m_filter_data;
 
         float m_initial_heading;
         float m_imu_data_rate = 100;
