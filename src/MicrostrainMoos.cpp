@@ -23,14 +23,16 @@ bool MicrostrainMoos::OnStartUp() {
 
 
     std::string conn_type_param;
-    ConnectionType conn_type = ConnectionType::SERIAL;
+    ConnectionType conn_type;
     if(!m_MissionReader.GetConfigurationParam("connection_type", conn_type_param)){
-
+        conn_type_param = "SERIAL";
     }
-    if(conn_type_param.empty() || conn_type_param == "SERIAL") {
+    if(conn_type_param == "SERIAL") {
         conn_type = ConnectionType::SERIAL;
     } else if (conn_type_param == "TCP") {
         conn_type = ConnectionType::TCP;
+    } else {
+        conn_type = ConnectionType::SERIAL;
     }
     if(!m_MissionReader.GetConfigurationParam("tcp_addr", m_tcp_addr)){
         m_tcp_addr = "localhost";
@@ -83,6 +85,10 @@ bool MicrostrainMoos::OnStartUp() {
 
     m_imu.configure();
 
+    m_name_roll = m_raw_prefix + "_ROLL";
+    m_name_pitch =  m_raw_prefix+ "_PITCH";
+    m_name_yaw = m_raw_prefix + "_YAW";
+
     m_name_x_accel = m_raw_prefix + "_X_ACCEL";
     m_name_y_accel = m_raw_prefix + "_Y_ACCEL";
     m_name_z_accel = m_raw_prefix + "_Z_ACCEL";
@@ -100,9 +106,9 @@ bool MicrostrainMoos::OnStartUp() {
     m_name_y_quat = m_raw_prefix + "_Y_MAG";
     m_name_z_quat = m_raw_prefix + "_Z_MAG";
 
-    m_name_roll = m_filter_prefix + "_ROLL";
-    m_name_pitch = m_filter_prefix + "_PITCH";
-    m_name_yaw = m_filter_prefix + "_YAW";
+    m_name_f_roll = m_filter_prefix + "_ROLL";
+    m_name_f_pitch = m_filter_prefix + "_PITCH";
+    m_name_f_yaw = m_filter_prefix + "_YAW";
 
     m_name_f_x_accel = m_filter_prefix + "_X_ACCEL";
     m_name_f_y_accel = m_filter_prefix + "_Y_ACCEL";
@@ -144,9 +150,9 @@ bool MicrostrainMoos::Iterate() {
 
 void MicrostrainMoos::publish_filtered(imu_data_t &d) {
     if(m_publish_filter) {
-        Notify(m_name_roll, d.roll, d.time);
-        Notify(m_name_pitch, d.pitch, d.time);
-        Notify(m_name_yaw, d.yaw, d.time);
+        Notify(m_name_f_roll, d.roll, d.time);
+        Notify(m_name_f_pitch, d.pitch, d.time);
+        Notify(m_name_f_yaw, d.yaw, d.time);
 
         Notify(m_name_f_x_accel, d.linear_accel_x, d.time);
         Notify(m_name_f_y_accel, d.linear_accel_y, d.time);
@@ -165,6 +171,11 @@ void MicrostrainMoos::publish_filtered(imu_data_t &d) {
 
 void MicrostrainMoos::publish_imu(imu_data_t &d) {
     if(m_publish_raw) {
+        Notify(m_name_roll, d.roll, d.time);
+        Notify(m_name_pitch, d.pitch, d.time);
+        Notify(m_name_yaw, d.yaw, d.time);
+
+
         Notify(m_name_x_accel, d.linear_accel_x, d.time);
         Notify(m_name_y_accel, d.linear_accel_y, d.time);
         Notify(m_name_z_accel, d.linear_accel_z, d.time);

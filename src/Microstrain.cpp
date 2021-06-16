@@ -60,6 +60,7 @@ void Microstrain::configure() {
         mscl::MipTypes::MipChannelFields ahrsChannels{
                 mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_SCALED_ACCEL_VEC,
                 mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_SCALED_GYRO_VEC,
+                mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_EULER_ANGLES,
                 mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_ORIENTATION_QUATERNION,
                 mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_SCALED_MAG_VEC,
                 // mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_GPS_CORRELATION_TIMESTAMP,
@@ -76,9 +77,9 @@ void Microstrain::configure() {
                 supportedChannels.push_back(mscl::MipChannel(channel, imu_rate));
             }
         }
-    
+
         m_dev->setActiveChannelFields(mscl::MipTypes::DataClass::CLASS_AHRS_IMU, supportedChannels);
-    
+
         if(m_dev->features().supportsCommand(mscl::MipTypes::Command::CMD_EF_DECLINATION_SRC))
         {
             std::cout << "Setting Declination Source" << std::endl;
@@ -99,7 +100,7 @@ void Microstrain::configure() {
         
         fprintf(stdout, "Setting Filter data to stream at %d hz\n", m_filter_data_rate);
         
-        mscl::MipTypes::MipChannelFields navChannels{
+        mscl::MipTypes::MipChannelFields filterChannels{
                 // mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_FILTER_STATUS,
                 // mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_LLH_POS,
                 mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ORIENT_EULER,
@@ -108,6 +109,7 @@ void Microstrain::configure() {
                 // mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_NED_UNCERT,
                 // mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ATT_UNCERT_QUAT,
                 mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ANGULAR_RATE,
+                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_LINEAR_ACCEL,
                 // mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ATT_UNCERT_EULER,
                 mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_COMPENSATED_ACCEL,
                 mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_HEADING_UPDATE_SOURCE,
@@ -118,11 +120,12 @@ void Microstrain::configure() {
         mscl::MipChannels supportedChannels;
         for(mscl::MipTypes::ChannelField channel : m_dev->features().supportedChannelFields(mscl::MipTypes::DataClass::CLASS_ESTFILTER))
         {
-            if(std::find(navChannels.begin(), navChannels.end(), channel) != navChannels.end())
+            if(std::find(filterChannels.begin(), filterChannels.end(), channel) != filterChannels.end())
             {
                 supportedChannels.push_back(mscl::MipChannel(channel, filter_rate));
             }
         }
+        m_dev->setActiveChannelFields(mscl::MipTypes::DataClass::CLASS_ESTFILTER, supportedChannels);
 
         //set dynamics mode
         if(m_dev->features().supportsCommand(mscl::MipTypes::Command::CMD_EF_VEHIC_DYNAMICS_MODE))
@@ -289,6 +292,22 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
                 }
             }break;
 
+            case mscl::MipTypes::CH_FIELD_ESTFILTER_ESTIMATED_LINEAR_ACCEL:
+            {
+                if(point.qualifier() == mscl::MipTypes::CH_X)
+                {
+                    m_filter_data.linear_accel_x = point.as_float();
+                }
+                else if(point.qualifier() == mscl::MipTypes::CH_Y)
+                {
+                    m_filter_data.linear_accel_y = point.as_float();
+                }
+                else if(point.qualifier() == mscl::MipTypes::CH_Z)
+                {
+                    m_filter_data.linear_accel_z = point.as_float();
+                }
+            }break;
+
             case mscl::MipTypes::CH_FIELD_ESTFILTER_COMPENSATED_ACCEL:
             {
                 if (point.qualifier() == mscl::MipTypes::CH_X)
@@ -440,6 +459,25 @@ void Microstrain::parse_imu_packet(const mscl::MipDataPacket &packet) {
                 else if(point.qualifier() == mscl::MipTypes::CH_Z)
                 {
                     m_imu_data.mag_z = point.as_float();
+                }
+            }break;
+
+            //Scaled Mag
+            case mscl::MipTypes::CH_FIELD_SENSOR_EULER_ANGLES:
+            {
+                has_mag = true;
+
+                if(point.qualifier() == mscl::MipTypes::CH_ROLL)
+                {
+                    m_imu_data.roll = point.as_float();
+                }
+                else if(point.qualifier() == mscl::MipTypes::CH_PITCH)
+                {
+                    m_imu_data.pitch = point.as_float();
+                }
+                else if(point.qualifier() == mscl::MipTypes::CH_YAW)
+                {
+                    m_imu_data.yaw = point.as_float();
                 }
             }break;
 

@@ -112,6 +112,10 @@ private:
     std::string m_name_pitch;
     std::string m_name_yaw;
 
+    std::string m_name_f_roll;
+    std::string m_name_f_pitch;
+    std::string m_name_f_yaw;
+
 };
 
 #endif //MICROSTRAIN_MOOS_H
