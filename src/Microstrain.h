@@ -69,9 +69,12 @@ typedef struct imu_data_t {
     }
 } imu_data_t;
 
-
-
 class MicrostrainMoos;
+
+enum class ConnectionType {
+    TCP,
+    SERIAL
+};
 
 class Microstrain {
     public:
@@ -82,6 +85,12 @@ class Microstrain {
         Microstrain(std::string port, int baud);
 
         Microstrain(std::string port, int baud, std::shared_ptr<MicrostrainMoos> moos_node);
+
+        void set_tcp_addr(std::string a) { m_tcp_addr = a; }
+        std::string get_tcp_addr() {return m_tcp_addr; }
+
+        void set_tcp_port(int p) {m_tcp_port = p;}
+        int get_tcp_port() {return m_tcp_port; }
 
         void set_baudrate(int b) { m_baudrate = b;}
         int get_baudrate() { return m_baudrate; }
@@ -98,6 +107,12 @@ class Microstrain {
         void set_filter_rate(float r) { m_filter_data_rate = r; }
         float get_filter_rate() { return m_filter_data_rate; }
 
+        void set_connection_type(ConnectionType c) { m_connection_type = c; }
+        ConnectionType get_connection_type() {return m_connection_type; }
+
+        void set_moos_node(std::shared_ptr<MicrostrainMoos> m) { m_moos_node = m;}
+        std::shared_ptr<MicrostrainMoos> get_moos_node() { return m_moos_node;}
+
         void initialize();
         
         void configure();
@@ -112,16 +127,21 @@ class Microstrain {
 
         void calibrate();
 
-        imu_data_t get_imu_data();
+        imu_data_t & get_imu_data();
 
         imu_data_t & get_filter_data();
 
     private:
-    
+
+        ConnectionType m_connection_type;
+
+        std::string m_tcp_addr;
+        int m_tcp_port;
+
         std::string m_port;
         int m_baudrate;
         bool m_stop = false;
-        float m_rate = 100; // hz
+        float m_rate = 50; // hz
 
         imu_data_t m_imu_data;
 

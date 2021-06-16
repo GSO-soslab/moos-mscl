@@ -14,9 +14,11 @@
 #include "mscl/mscl.h"
 #include "chrono"
 #include "thread"
+#include "iostream"
 
 #include "Microstrain.h"
 #include "MicrostrainMoos.h"
+
 
 Microstrain::Microstrain(std::string port, int baud) {
     m_baudrate = baud;
@@ -30,13 +32,17 @@ Microstrain::Microstrain(std::string port, int baud, std::shared_ptr<Microstrain
 }
 
 void Microstrain::initialize() {
-    
-    m_connection = std::make_shared<mscl::Connection>
-            (mscl::Connection::Serial(realpath(m_port.c_str(), 0), (uint32_t) m_baudrate));
+
+    if(m_connection_type == ConnectionType::TCP) {
+        m_connection = std::make_shared<mscl::Connection>
+                (mscl::Connection::TcpIp(m_tcp_addr, m_tcp_port));
+    }
+    if(m_connection_type == ConnectionType::SERIAL) {
+        m_connection = std::make_shared<mscl::Connection>
+                (mscl::Connection::Serial(realpath(m_port.c_str(), 0), m_baudrate));
+    }
     m_dev = std::make_shared<mscl::InertialNode>
             (*m_connection);
-   
-    
 }
 
 void Microstrain::configure() {
@@ -46,30 +52,17 @@ void Microstrain::configure() {
     bool supports_filter = m_dev->features().supportsCategory(mscl::MipTypes::DataClass::CLASS_ESTFILTER);
     bool supports_imu    = m_dev->features().supportsCategory(mscl::MipTypes::DataClass::CLASS_AHRS_IMU);
 
-    mscl::MipChannels ahrsImuChs;
-    ahrsImuChs.push_back(mscl::MipChannel(mscl::MipTypes::CH_FIELD_SENSOR_RAW_ACCEL_VEC, mscl::SampleRate::Hertz(500)));
-    ahrsImuChs.push_back(mscl::MipChannel(mscl::MipTypes::CH_FIELD_SENSOR_RAW_GYRO_VEC, mscl::SampleRate::Hertz(100)));
-    ahrsImuChs.push_back(mscl::MipChannel(mscl::MipTypes::CH_FIELD_SENSOR_RAW_MAG_VEC, mscl::SampleRate::Hertz(100)));
-    
-    
-    mscl::MipChannels estFilterChs;
-    estFilterChs.push_back(mscl::MipChannel(mscl::MipTypes::CH_FIELD_ESTFILTER_ESTIMATED_ACCEL_BIAS, mscl::SampleRate::Hertz(100)));
-    estFilterChs.push_back(mscl::MipChannel(mscl::MipTypes::CH_FIELD_ESTFILTER_ESTIMATED_GYRO_BIAS, mscl::SampleRate::Hertz(100)));
-    estFilterChs.push_back(mscl::MipChannel(mscl::MipTypes::CH_FIELD_ESTFILTER_ESTIMATED_ANGULAR_RATE, mscl::SampleRate::Hertz(100)));
-    estFilterChs.push_back(mscl::MipChannel(mscl::MipTypes::CH_FIELD_ESTFILTER_ESTIMATED_LINEAR_ACCEL, mscl::SampleRate::Hertz(100)));
-
-
-    if(supports_imu) {
+    if(supports_imu && m_moos_node->get_publish_raw()) {
         mscl::SampleRate imu_rate = mscl::SampleRate::Hertz(m_imu_data_rate);
     
         std::cout << "Setting IMU data to stream at " <<  m_imu_data_rate << " hz" << std::endl;
-    
+
         mscl::MipTypes::MipChannelFields ahrsChannels{
                 mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_SCALED_ACCEL_VEC,
                 mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_SCALED_GYRO_VEC,
                 mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_ORIENTATION_QUATERNION,
                 mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_SCALED_MAG_VEC,
-                mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_GPS_CORRELATION_TIMESTAMP,
+                // mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_GPS_CORRELATION_TIMESTAMP,
                 mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_RAW_ACCEL_VEC,
                 mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_RAW_GYRO_VEC,
                 mscl::MipTypes::ChannelField::CH_FIELD_SENSOR_RAW_MAG_VEC
@@ -95,30 +88,31 @@ void Microstrain::configure() {
         {
             std::cout << "Note: Device does not support the declination source command." << std::endl;
         }
-    
+
         m_dev->enableDataStream(mscl::MipTypes::DataClass::CLASS_AHRS_IMU);
     }
     
     
-    if(supports_filter)
+    if(supports_filter && m_moos_node->get_publish_filter())
     {
         mscl::SampleRate filter_rate = mscl::SampleRate::Hertz(m_filter_data_rate);
         
         fprintf(stdout, "Setting Filter data to stream at %d hz\n", m_filter_data_rate);
         
         mscl::MipTypes::MipChannelFields navChannels{
-                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_FILTER_STATUS,
-                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_LLH_POS,
-                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ORIENT_QUATERNION,
-                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_LLH_UNCERT,
-                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_NED_UNCERT,
-                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ATT_UNCERT_QUAT,
-                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ANGULAR_RATE,
-                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ATT_UNCERT_EULER,
-                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_COMPENSATED_ACCEL,
+                // mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_FILTER_STATUS,
+                // mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_LLH_POS,
                 mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ORIENT_EULER,
+                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ORIENT_QUATERNION,
+                // mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_LLH_UNCERT,
+                // mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_NED_UNCERT,
+                // mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ATT_UNCERT_QUAT,
+                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ANGULAR_RATE,
+                // mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_ESTIMATED_ATT_UNCERT_EULER,
+                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_COMPENSATED_ACCEL,
                 mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_HEADING_UPDATE_SOURCE,
-                mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_NED_RELATIVE_POS};
+                // mscl::MipTypes::ChannelField::CH_FIELD_ESTFILTER_NED_RELATIVE_POS
+        };
         
        
         mscl::MipChannels supportedChannels;
@@ -129,9 +123,7 @@ void Microstrain::configure() {
                 supportedChannels.push_back(mscl::MipChannel(channel, filter_rate));
             }
         }
-        
-        m_dev->setActiveChannelFields(mscl::MipTypes::DataClass::CLASS_ESTFILTER, supportedChannels);
-        
+
         //set dynamics mode
         if(m_dev->features().supportsCommand(mscl::MipTypes::Command::CMD_EF_VEHIC_DYNAMICS_MODE))
         {
@@ -173,16 +165,16 @@ void Microstrain::configure() {
         }
         
         
-        //Set the filter autoinitialization, if suppored
+        //Set the filter auto initialization, if suppored
         if(m_dev->features().supportsCommand(mscl::MipTypes::Command::CMD_EF_AUTO_INIT_CTRL))
         {
             // TODO: this part is hard coded. It might needed to be changed.
-            fprintf(stdout, "Setting autoinitialization to %d", true);
+            fprintf(stdout, "Setting auto initialization to %d\n", true);
             m_dev->setAutoInitialization(true);
         }
         else
         {
-            fprintf(stdout, "Note: The device does not support the filter autoinitialization command.");
+            fprintf(stdout, "Note: The device does not support the filter auto initialization command.\n");
         }
        
         //Enable the filter datastream
@@ -190,9 +182,7 @@ void Microstrain::configure() {
     }
    
     // todo: set rotations https://github.com/LORD-MicroStrain/ROS-MSCL/blob/3d7372e8b2341c6b9cb8c898bd125e5afd491195/ros_mscl/src/microstrain_3dm.cpp#L831-L912
-    
-    
-    
+
     // m_dev->setActiveChannelFields(mscl::MipTypes::CLASS_ESTFILTER, estFilterChs);
 
     m_dev->resume();
@@ -202,13 +192,13 @@ void Microstrain::parse_mip_packet(const mscl::MipDataPacket &packet) {
     switch (packet.descriptorSet())
     {
         case mscl::MipTypes::DataClass::CLASS_AHRS_IMU:
-            if(m_moos_node->publish_imu()) {
+            if(m_moos_node->get_publish_raw()) {
                 parse_imu_packet(packet);
             }
             break;
         
         case mscl::MipTypes::DataClass::CLASS_ESTFILTER:
-            if(m_moos_node->publish_fileterd()) {
+            if(m_moos_node->get_publish_filter()) {
                 parse_filter_packet(packet);
             }
             break;
@@ -219,14 +209,13 @@ void Microstrain::parse_mip_packet(const mscl::MipDataPacket &packet) {
 
 
 void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
-    int  i;
 
     //Handle time
     m_filter_data.time = packet.collectedTimestamp().nanoseconds();
-    
+
     //Get the list of data elements
     const mscl::MipDataPoints &points = packet.data();
-    
+
     //Loop over data elements and map them
     for(mscl::MipDataPoint point : points)
     {
@@ -342,7 +331,7 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
                 }
             } break;
              */
-            
+
             /*
             case mscl::MipTypes::CH_FIELD_ESTFILTER_HEADING_UPDATE_SOURCE:
             {
@@ -364,7 +353,7 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
                 }
             } break;
             */
-           
+
             default:
                 break;
         }
@@ -384,7 +373,7 @@ void Microstrain::parse_imu_packet(const mscl::MipDataPacket &packet) {
     bool has_gyro  = false;
     bool has_quat  = false;
     bool has_mag   = false;
-    
+
     //Get the list of data elements
     const mscl::MipDataPoints &points = packet.data();
     
@@ -415,12 +404,12 @@ void Microstrain::parse_imu_packet(const mscl::MipDataPacket &packet) {
                     m_imu_data.linear_accel_z = USTRAIN_G * point.as_float();
                 }
             }break;
-                
+
                 //Scaled Gyro
             case mscl::MipTypes::CH_FIELD_SENSOR_SCALED_GYRO_VEC:
             {
                 has_gyro = true;
-                
+
                 if(point.qualifier() == mscl::MipTypes::CH_X)
                 {
                     m_imu_data.angular_vel_x = point.as_float();
@@ -434,12 +423,12 @@ void Microstrain::parse_imu_packet(const mscl::MipDataPacket &packet) {
                     m_imu_data.angular_vel_z = point.as_float();
                 }
             }break;
-                
-                //Scaled Mag
+
+            //Scaled Mag
             case mscl::MipTypes::CH_FIELD_SENSOR_SCALED_MAG_VEC:
             {
                 has_mag = true;
-                
+
                 if(point.qualifier() == mscl::MipTypes::CH_X)
                 {
                     m_imu_data.mag_x = point.as_float();
@@ -453,8 +442,8 @@ void Microstrain::parse_imu_packet(const mscl::MipDataPacket &packet) {
                     m_imu_data.mag_z = point.as_float();
                 }
             }break;
-                
-                //Orientation Quaternion
+
+            //Orientation Quaternion
             case mscl::MipTypes::CH_FIELD_SENSOR_ORIENTATION_QUATERNION:
             {
                 has_quat = true;
@@ -473,13 +462,13 @@ void Microstrain::parse_imu_packet(const mscl::MipDataPacket &packet) {
                 break;
         }
     }
-    
+
     if(has_accel)
     {
         // Since the sensor does not produce a covariance for linear acceleration, set it based on our pulled in parameters.
         // std::copy(m_imu_linear_cov.begin(), m_imu_linear_cov.end(), m_imu_msg.linear_acceleration_covariance.begin());
     }
-    
+
     if(has_gyro)
     {
         // Since the sensor does not produce a covariance for angular velocity, set it based on our pulled in parameters.
@@ -526,7 +515,7 @@ bool Microstrain::test_connection() {
     return m_dev->ping();
 }
 
-imu_data_t Microstrain::get_imu_data() {
+imu_data_t & Microstrain::get_imu_data() {
     return m_imu_data;
 }
 

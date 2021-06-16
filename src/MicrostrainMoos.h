@@ -22,13 +22,13 @@ public:
     MicrostrainMoos();
     ~MicrostrainMoos() override = default;
 
-    void publish_filtered(imu_data_t d);
+    void publish_filtered(imu_data_t &d);
 
-    void publish_imu(imu_data_t d);
+    void publish_imu(imu_data_t &d);
 
-    bool publish_fileterd() { return  m_publish_filter; };
+    bool get_publish_filter() { return  m_publish_filter; };
 
-    bool publish_imu() { return m_publish_raw; }
+    bool get_publish_raw() { return m_publish_raw; }
 
 protected:
     
@@ -44,6 +44,10 @@ protected:
 private:
 
 
+    int m_app_tick;
+
+    int m_comms_tick;
+
     Microstrain m_imu;
 
     std::string m_imu_port;
@@ -55,7 +59,11 @@ private:
     bool m_publish_raw;
     
     bool m_publish_filter;
-    
+
+    std::string m_tcp_addr;
+
+    int m_tcp_port;
+
     int m_imu_baudrate;
     
     float m_publish_frequency;
@@ -94,10 +102,6 @@ private:
     std::string m_name_f_y_gyro;
     std::string m_name_f_z_gyro;
 
-    std::string m_name_f_x_mag;
-    std::string m_name_f_y_mag;
-    std::string m_name_f_z_mag;
-
     std::string m_name_f_w_quat;
     std::string m_name_f_x_quat;
     std::string m_name_f_y_quat;
@@ -107,8 +111,6 @@ private:
     std::string m_name_roll;
     std::string m_name_pitch;
     std::string m_name_yaw;
-
-
 
 };
 

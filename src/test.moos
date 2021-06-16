@@ -17,13 +17,12 @@ ProcessConfig = iMicrostrainIMU
     port = "/dev/ttyACM0"
     baudrate = 115200
 
-    prefix = "MS"
+    filter_prefix = "MS"
 
-    publish_raw = TRUE
+    publish_raw = FALSE
     publish_filter = TRUE
 
-    publish_frequency = 40
-    imu_frequency = 40
-    filter_frequency = 40
-
+    publish_frequency = 50
+    imu_frequency = 100
+    filter_frequency = 50
 }
