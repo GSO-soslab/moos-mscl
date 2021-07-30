@@ -214,7 +214,7 @@ void Microstrain::parse_mip_packet(const mscl::MipDataPacket &packet) {
 void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
 
     //Handle time
-    m_filter_data.time = packet.collectedTimestamp().nanoseconds();
+    m_filter_data.time = double(packet.collectedTimestamp().nanoseconds()) ;
 
     //Get the list of data elements
     const mscl::MipDataPoints &points = packet.data();
@@ -385,7 +385,7 @@ void Microstrain::parse_filter_packet(const mscl::MipDataPacket &packet) {
 
 void Microstrain::parse_imu_packet(const mscl::MipDataPacket &packet) {
     //Handle time
-    m_imu_data.time = packet.collectedTimestamp().nanoseconds();
+    m_imu_data.time = double(packet.collectedTimestamp().nanoseconds()) ;
 
     //Data present flags
     bool has_accel = false;

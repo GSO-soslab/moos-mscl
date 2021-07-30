@@ -30,23 +30,23 @@
 #define USTRAIN_G 9.80665
 
 typedef struct imu_data_t {
-    uint64_t time;
-    float roll;
-    float pitch;
-    float yaw;
-    float linear_accel_x;
-    float linear_accel_y;
-    float linear_accel_z;
-    float angular_vel_x;
-    float angular_vel_y;
-    float angular_vel_z;
-    float mag_x;
-    float mag_y;
-    float mag_z;
-    float quat_w;
-    float quat_x;
-    float quat_y;
-    float quat_z;
+    double time;
+    double roll;
+    double pitch;
+    double yaw;
+    double linear_accel_x;
+    double linear_accel_y;
+    double linear_accel_z;
+    double angular_vel_x;
+    double angular_vel_y;
+    double angular_vel_z;
+    double mag_x;
+    double mag_y;
+    double mag_z;
+    double quat_w;
+    double quat_x;
+    double quat_y;
+    double quat_z;
 
 
     friend std::ostream& operator<<(std::ostream& os, const imu_data_t& obj)
@@ -161,7 +161,6 @@ class Microstrain {
         void parse_mip_packet(const mscl::MipDataPacket& packet);
         void parse_imu_packet(const mscl::MipDataPacket& packet);
         void parse_filter_packet(const mscl::MipDataPacket& packet);
-
 
 };
 
